@@ -68,6 +68,16 @@ type Token = {
 export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
   const [tokenIn, setTokenIn] = useState<Token | null>(tokensIn[0]);
   const [tokenOut, setTokenOut] = useState<Token | null>(tokensOut[0]);
+  const [amountIn, setAmountIn] = useState<string>("");
+  const [amountOut, setAmountOut] = useState<string>("");
+
+  function manuallyUpdateAmountIn(value: string) {
+    setAmountIn(value);
+  }
+
+  function manuallyUpdateAmountOut(value: string) {
+    setAmountOut(value);
+  }
 
   return (
     <div className={styles.swapBoxWrapper}>
@@ -100,10 +110,28 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                 </svg>
               </Tooltip>
             </div>
+            <div className="flex mt-7 max-w-full flex-wrap ml-8 mr-8">
+              <input
+                inputMode="decimal"
+                placeholder="0.0"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                min={0}
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                className={styles.inputBox}
+                value={amountIn}
+                onChange={(e) => manuallyUpdateAmountIn(e.target.value)}
+              />
+            </div>
 
-            <div className="flex mt-7 max-w-full flex-wrap ml-6">
+            <div className="flex mt-3 max-w-full flex-wrap ml-6">
               {tokensIn.map((token) => (
                 <div
+                  key={token.symbol}
                   className={
                     tokenIn?.address === token.address
                       ? styles.tokenBoxSelected
@@ -123,7 +151,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
             <div className={"flex center"}>
               <div
                 style={{ width: "22px", height: "22px" }}
-                className={"mx-auto mt-5 mb-5"}
+                className={"mx-auto mt-5 mb-1"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -223,6 +251,42 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                   </g>
                 </svg>
               </div>
+            </div>
+            <div className="flex mt-7 max-w-full flex-wrap ml-8 mr-8">
+              <input
+                inputMode="decimal"
+                placeholder="0.0"
+                autoComplete="off"
+                autoCorrect="off"
+                type="text"
+                pattern="^[0-9]*[.,]?[0-9]*$"
+                min={0}
+                minLength={1}
+                maxLength={79}
+                spellCheck="false"
+                className={styles.inputBox}
+                value={amountOut}
+                onChange={(e) => manuallyUpdateAmountOut(e.target.value)}
+              />
+            </div>
+            <div className="flex mt-3 max-w-full flex-wrap ml-6">
+              {tokensOut.map((token) => (
+                <div
+                  key={token.symbol}
+                  className={
+                    tokenOut?.address === token.address
+                      ? styles.tokenBoxSelected
+                      : styles.tokenBox
+                  }
+                  onClick={() => setTokenIn(token)}
+                >
+                  <span className={"text-sky-600 ml-1"}>{token.symbol}</span>{" "}
+                  <img
+                    src={"/images/" + token.symbol + ".png"}
+                    className={"ml-auto mr-0 w-6 h-6 rounded-md mt-0.5"}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
