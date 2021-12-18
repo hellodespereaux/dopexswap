@@ -28,4 +28,20 @@ a {
 
 body {
   background: black;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.bg-blue {
+    --tw-bg-opacity: 1;
+    background-color: rgba(9,147,236,var(--tw-bg-opacity));
+}
+
+.bg-other-blue {
+    --tw-bg-opacity: 1;
+    background-color: rgba(16,247,236,var(--tw-bg-opacity));
+}
+
+.icon-colored {
+    color: #1e8ac1;
 }
