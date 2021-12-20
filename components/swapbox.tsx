@@ -106,37 +106,40 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
     setIsLoading(true);
     setIsBalanceInsufficient(false);
     setIsAllowanceInsufficient(false);
-    const amount = tokenIn && parseFloat(amountIn) * 10 ** tokenIn.decimals;
+    const amount =
+      tokenIn &&
+      (parseFloat(amountIn) * 10 ** tokenIn.decimals)
+        .toLocaleString()
+        .replaceAll(".", "");
     const request = await fetch(
       `https://api.1inch.io/v4.0/42161/swap?fromTokenAddress=${tokenIn?.address}&toTokenAddress=${tokenOut?.address}&amount=${amount}&fromAddress=${account}&slippage=${slippageTolerance}`
     );
     const data = await request.json();
     setPath(data);
 
-    // order is important
-
-    if (
-      request.status === 400 &&
-      data.description.includes("Not enough allowance")
-    ) {
-      setIsAllowanceInsufficient(true);
-      const request = await fetch(
+    if (request.status === 400) {
+      const requestWithoutEstimate = await fetch(
         `https://api.1inch.io/v4.0/42161/swap?fromTokenAddress=${tokenIn?.address}&toTokenAddress=${tokenOut?.address}&amount=${amount}&fromAddress=${account}&slippage=${slippageTolerance}&disableEstimate=true`
       );
-      const data = await request.json();
-      setPath(data);
-    } else if (
-      request.status === 400 &&
-      data.description.includes("Not enough")
-    ) {
-      setIsBalanceInsufficient(true);
-      if (tokenIn) {
-        let maxAmount =
-          parseFloat(data["meta"][2]["value"]) / 10 ** tokenIn.decimals;
-        if (tokenIn.symbol === "ETH") maxAmount -= 0.02; // max tx fee
-        setSuggestedMaximumAmount(maxAmount.toString());
+      const dataWithoutEstimate = await requestWithoutEstimate.json();
+      setPath(dataWithoutEstimate);
+
+      // order is important
+
+      if (data.description.includes("Not enough allowance")) {
+        setIsAllowanceInsufficient(true);
+      } else if (data.description.includes("Not enough")) {
+        setIsBalanceInsufficient(true);
+        if (tokenIn) {
+          let maxAmount =
+            parseFloat(data["meta"][2]["value"]) / 10 ** tokenIn.decimals;
+          if (tokenIn.symbol === "ETH") maxAmount -= 0.02; // max tx fee
+          setSuggestedMaximumAmount(maxAmount.toString());
+        }
       }
-    } else if (request.status === 200) {
+    }
+
+    if (request.status === 200) {
       setIsBalanceInsufficient(false);
     }
 
@@ -191,7 +194,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
 
   useEffect(
     function () {
-      if (amountIn) getPathFromAmountIn();
+      if (amountIn && tokenIn && tokenOut) getPathFromAmountIn();
     },
     [amountIn, tokenIn, tokenOut]
   );
@@ -502,7 +505,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
                 )}
               </div>
             )}
-            {path && !isBalanceInsufficient && (
+            {path && (
               <div className="mt-5 mb-7 max-w-full mx-7">
                 <p className={"text-white mt-1"}>
                   Minimum amount -{" "}
