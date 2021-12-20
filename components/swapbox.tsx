@@ -134,7 +134,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
           let maxAmount =
             parseFloat(data["meta"][2]["value"]) / 10 ** tokenIn.decimals;
           if (tokenIn.symbol === "ETH") maxAmount -= 0.02; // max tx fee
-          setSuggestedMaximumAmount(maxAmount.toString());
+          setSuggestedMaximumAmount(Math.max(maxAmount, 0).toString());
         }
       }
     }
