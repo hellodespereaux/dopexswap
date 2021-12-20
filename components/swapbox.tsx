@@ -334,7 +334,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
             <div className={"flex center"}>
               <div
                 style={{ width: "22px", height: "22px" }}
-                className={"mx-auto mt-2 mb-1"}
+                className={"mx-auto mt-5 mb-1"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
