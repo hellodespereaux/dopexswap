@@ -71,10 +71,10 @@ type Token = {
 type Transaction = {
   from: string;
   data: string;
-  gas: number | null;
+  gas: number | string | undefined;
   to: string;
   value: string;
-  gasPrice: string | null;
+  gasPrice?: string | null ;
 };
 
 type Path = {
@@ -155,7 +155,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
   };
 
   const approve = async () => {
-    if (!allowanceTransaction) return;
+    if (!allowanceTransaction || !account) return;
     allowanceTransaction["from"] = account;
     delete allowanceTransaction["gasPrice"];
     // @ts-ignore
@@ -172,7 +172,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
   const swap = async () => {
     if (!path || isBalanceInsufficient) return;
     delete path["tx"]["gasPrice"];
-    path["tx"]["gas"] = path["tx"]["gas"].toString(16);
+    path["tx"]["gas"] = path["tx"].gas?.toString(16);
     path["tx"]["value"] = parseInt(path["tx"]["value"]).toString(16);
     await window["ethereum"]
       .request({ method: "eth_sendTransaction", params: [path["tx"]] })
