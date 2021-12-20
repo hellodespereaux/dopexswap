@@ -1,6 +1,7 @@
 import styles from "../styles/swapbox.module.css";
 import { FunctionComponent, useState, useEffect } from "react";
-import { Tooltip } from "antd";
+import { Tooltip, Spin } from "antd";
+import { DelayInput } from "react-delay-input";
 
 const tokensOut = [
   {
@@ -56,7 +57,9 @@ const tokensIn = [
   },
 ];
 
-type SwapBoxProps = {};
+type SwapBoxProps = {
+  account: string | null;
+};
 
 type Token = {
   address: string;
@@ -65,19 +68,135 @@ type Token = {
   symbol: string;
 };
 
-export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
+type Transaction = {
+  from: string;
+  data: string;
+  gas: number | null;
+  to: string;
+  value: string;
+  gasPrice: string | null;
+};
+
+type Path = {
+  toTokenAmount: string;
+  tx: Transaction;
+};
+
+export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
   const [tokenIn, setTokenIn] = useState<Token | null>(tokensIn[0]);
   const [tokenOut, setTokenOut] = useState<Token | null>(tokensOut[0]);
   const [amountIn, setAmountIn] = useState<string>("");
-  const [amountOut, setAmountOut] = useState<string>("");
+  const [slippageTolerance, setSlippageTolerance] = useState<string>("0.1");
+  const [path, setPath] = useState<Path | null>(null);
+  const [isBalanceInsufficient, setIsBalanceInsufficient] =
+    useState<boolean>(false);
+  const [suggestedMaximumAmount, setSuggestedMaximumAmount] = useState<
+    string | null
+  >("0");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isAllowanceInsufficient, setIsAllowanceInsufficient] =
+    useState<boolean>(false);
+  const [allowanceTransaction, setAllowanceTransaction] =
+    useState<Transaction | null>();
 
-  function manuallyUpdateAmountIn(value: string) {
-    setAmountIn(value);
-  }
+  const getPathFromAmountIn = async () => {
+    setIsLoading(true);
+    setIsBalanceInsufficient(false);
+    setIsAllowanceInsufficient(false);
+    const amount = tokenIn && parseFloat(amountIn) * 10 ** tokenIn.decimals;
+    const request = await fetch(
+      `https://api.1inch.io/v4.0/42161/swap?fromTokenAddress=${tokenIn?.address}&toTokenAddress=${tokenOut?.address}&amount=${amount}&fromAddress=${account}&slippage=${slippageTolerance}`
+    );
+    const data = await request.json();
+    setPath(data);
 
-  function manuallyUpdateAmountOut(value: string) {
-    setAmountOut(value);
-  }
+    // order is important
+
+    if (
+      request.status === 400 &&
+      data.description.includes("Not enough allowance")
+    ) {
+      setIsAllowanceInsufficient(true);
+      const request = await fetch(
+        `https://api.1inch.io/v4.0/42161/swap?fromTokenAddress=${tokenIn?.address}&toTokenAddress=${tokenOut?.address}&amount=${amount}&fromAddress=${account}&slippage=${slippageTolerance}&disableEstimate=true`
+      );
+      const data = await request.json();
+      setPath(data);
+    } else if (
+      request.status === 400 &&
+      data.description.includes("Not enough")
+    ) {
+      setIsBalanceInsufficient(true);
+      if (tokenIn) {
+        let maxAmount =
+          parseFloat(data["meta"][2]["value"]) / 10 ** tokenIn.decimals;
+        if (tokenIn.symbol === "ETH") maxAmount -= 0.02; // max tx fee
+        setSuggestedMaximumAmount(maxAmount.toString());
+      }
+    } else if (request.status === 200) {
+      setIsBalanceInsufficient(false);
+    }
+
+    setIsLoading(false);
+  };
+
+  const getAllowance = async () => {
+    const request = await fetch(
+      `https://api.1inch.io/v4.0/42161/approve/transaction?tokenAddress=${tokenIn?.address}`
+    );
+    let data = await request.json();
+    setAllowanceTransaction(data);
+  };
+
+  const approve = async () => {
+    if (!allowanceTransaction) return;
+    allowanceTransaction["from"] = account;
+    delete allowanceTransaction["gasPrice"];
+    // @ts-ignore
+    await window["ethereum"]
+      .request({
+        method: "eth_sendTransaction",
+        params: [allowanceTransaction],
+      })
+      .then(() => {
+        getPathFromAmountIn();
+      });
+  };
+
+  const swap = async () => {
+    if (!path || isBalanceInsufficient) return;
+    delete path["tx"]["gasPrice"];
+    path["tx"]["gas"] = path["tx"]["gas"].toString(16);
+    path["tx"]["value"] = parseInt(path["tx"]["value"]).toString(16);
+    await window["ethereum"]
+      .request({ method: "eth_sendTransaction", params: [path["tx"]] })
+      .then(() => {
+        setAmountIn("");
+        setPath(null);
+      });
+  };
+
+  useEffect(
+    function () {
+      if (amountIn) getPathFromAmountIn();
+    },
+    [amountIn, tokenIn, tokenOut]
+  );
+
+  useEffect(
+    function () {
+      if (!isAllowanceInsufficient) getAllowance();
+    },
+    [isAllowanceInsufficient]
+  );
+
+  useEffect(
+    function () {
+      // @ts-ignore
+      if (account) setAmountIn(window["ethereum"].eth?.get_balance(account));
+    },
+    [account]
+  );
 
   return (
     <div className={styles.swapBoxWrapper}>
@@ -111,7 +230,8 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
               </Tooltip>
             </div>
             <div className="flex mt-7 max-w-full flex-wrap ml-8 mr-8">
-              <input
+              <DelayInput
+                delayTimeout={300}
                 inputMode="decimal"
                 placeholder="0.0"
                 autoComplete="off"
@@ -124,9 +244,28 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                 spellCheck="false"
                 className={styles.inputBox}
                 value={amountIn}
-                onChange={(e) => manuallyUpdateAmountIn(e.target.value)}
+                onChange={(e: { target: { value: string } }) =>
+                  setAmountIn(e.target.value)
+                }
               />
             </div>
+            {isBalanceInsufficient && (
+              <div className="flex mt-3 mb-7 max-w-full flex-wrap ml-8 mr-8">
+                <p
+                  className={"text-red-500 cursor-pointer"}
+                  onClick={() => {
+                    suggestedMaximumAmount &&
+                      setAmountIn(suggestedMaximumAmount);
+                  }}
+                >
+                  <b>
+                    You can sell at maximum {suggestedMaximumAmount}{" "}
+                    {tokenIn?.symbol}{" "}
+                    <span className={styles.smallNote}>(Click to set)</span>
+                  </b>
+                </p>
+              </div>
+            )}
 
             <div className="flex mt-3 max-w-full flex-wrap ml-6">
               {tokensIn.map((token) => (
@@ -151,7 +290,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
             <div className={"flex center"}>
               <div
                 style={{ width: "22px", height: "22px" }}
-                className={"mx-auto mt-5 mb-1"}
+                className={"mx-auto mt-2 mb-1"}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -265,8 +404,13 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                 maxLength={79}
                 spellCheck="false"
                 className={styles.inputBox}
-                value={amountOut}
-                onChange={(e) => manuallyUpdateAmountOut(e.target.value)}
+                style={{ cursor: "auto" }}
+                value={
+                  path?.toTokenAmount && tokenOut
+                    ? parseInt(path?.toTokenAmount) / 10 ** tokenOut.decimals
+                    : "0.0"
+                }
+                readOnly={true}
               />
             </div>
             <div className="flex mt-3 max-w-full flex-wrap ml-6">
@@ -278,7 +422,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                       ? styles.tokenBoxSelected
                       : styles.tokenBox
                   }
-                  onClick={() => setTokenIn(token)}
+                  onClick={() => setTokenOut(token)}
                 >
                   <span className={"text-sky-600 ml-1"}>{token.symbol}</span>{" "}
                   <img
@@ -288,6 +432,35 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({}) => {
                 </div>
               ))}
             </div>
+            {isLoading && (
+              <div className="flex center mt-5 mb-7 max-w-full">
+                <Spin className={"mx-auto"} size={"large"} />
+              </div>
+            )}
+            {!isLoading && (
+              <div className="flex center mt-5 mb-7 max-w-full">
+                {!isAllowanceInsufficient ? (
+                  <button
+                    className={
+                      "w-full text-white text-high-emphesis bg-gradient-to-r from-blue to-other-blue opacity-80 hover:opacity-100 disabled:bg-opacity-80 px-6 py-4 text-base rounded disabled:cursor-not-allowed focus:outline-none mx-7 disabled:opacity-30"
+                    }
+                    disabled={!path || isBalanceInsufficient}
+                    onClick={swap}
+                  >
+                    {path ? "Swap" : "Insert an amount"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={approve}
+                    className={
+                      "w-full text-white text-high-emphesis bg-gradient-to-r from-blue to-other-blue opacity-80 hover:opacity-100 disabled:bg-opacity-80 px-6 py-4 text-base rounded disabled:cursor-not-allowed focus:outline-none mx-7"
+                    }
+                  >
+                    Approve
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>

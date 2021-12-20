@@ -45,3 +45,17 @@ body {
 .icon-colored {
     color: #1e8ac1;
 }
+
+.mx-auto {
+    margin-left: auto!important;
+    margin-right: auto!important;
+}
+
+.to-other-blue {
+    --tw-gradient-to: rgba(16,247,236,1);
+}
+
+.from-blue {
+    --tw-gradient-from: rgba(9,147,236,1);
+    --tw-gradient-stops: var(--tw-gradient-from),var(--tw-gradient-to,rgba(9,147,236,0));
+}

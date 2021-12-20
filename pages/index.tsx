@@ -15,12 +15,12 @@ const Home: NextPage = () => {
     setChainId(window["ethereum"].chainId);
   }
 
-  async function switchToArbitrumTestnet() {
+  async function switchToArbitrum() {
     try {
       // @ts-ignore
       await window["ethereum"].request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: "0x66eeb" }],
+        params: [{ chainId: "0xa4b1" }],
       });
     } catch (error) {
       // @ts-ignore
@@ -28,9 +28,9 @@ const Home: NextPage = () => {
         method: "wallet_addEthereumChain",
         params: [
           {
-            chainId: "0x66eeb",
-            rpcUrls: ["https://rinkeby.arbitrum.io/rpc"],
-            chainName: "Arbitrum Testnet",
+            chainId: "0xa4b1",
+            rpcUrls: ["https://arb1.arbitrum.io/rpc"],
+            chainName: "Arbitrum One",
             nativeCurrency: {
               name: "Ethereum",
               symbol: "ETH",
@@ -43,7 +43,7 @@ const Home: NextPage = () => {
   }
 
   useEffect(function () {
-    if (!window) return;
+    updateNetworkId();
     // @ts-ignore
     window["ethereum"].on("networkChanged", function () {
       updateNetworkId();
@@ -68,10 +68,10 @@ const Home: NextPage = () => {
         account={account}
         connect={connect}
         chainId={chainId}
-        switchToArbitrumTestnet={switchToArbitrumTestnet}
+        switchToArbitrum={switchToArbitrum}
       />
 
-      <SwapBox />
+      <SwapBox account={account} />
     </div>
   );
 };

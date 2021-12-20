@@ -10,7 +10,7 @@
 }
 
 .swapBoxWrapper {
-    margin-top: 10%;
+    margin-top: 4%;
     position: relative;
 }
 
@@ -117,4 +117,8 @@
     font-size: 1.3em;
     outline: none!important;
     width: 100%;
+}
+
+.smallNote {
+    font-size: 12px;
 }

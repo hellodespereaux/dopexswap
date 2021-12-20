@@ -1,5 +1,6 @@
 import "../styles/globals.css";
 import "../styles/tooltip.css";
+import "../styles/spin.css";
 import type { AppProps } from "next/app";
 import { MetaMaskProvider } from "metamask-react";
 

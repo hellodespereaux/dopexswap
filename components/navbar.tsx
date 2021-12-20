@@ -6,7 +6,7 @@ type NavbarProps = {
   account: string | null;
   connect: any;
   chainId: string | null;
-  switchToArbitrumTestnet: any;
+  switchToArbitrum: any;
 };
 
 export const Navbar: FunctionComponent<NavbarProps> = ({
@@ -14,7 +14,7 @@ export const Navbar: FunctionComponent<NavbarProps> = ({
   connect,
   account,
   chainId,
-  switchToArbitrumTestnet,
+  switchToArbitrum,
 }) => (
   <div className="sticky top-0 z-40 w-full backdrop-blur flex-none transition-colors duration-500 lg:z-50 lg:border-b lg:border-gray-900/10 bg-black/95 supports-backdrop-blur:bg-black/60 bottom-gradient">
     <div className="max-w-8xl mx-auto">
@@ -54,7 +54,7 @@ export const Navbar: FunctionComponent<NavbarProps> = ({
                 <strong className="font-semibold">Connecting...</strong>
               </div>
             )}
-            {status === "connected" && chainId === "0x66eeb" && (
+            {status === "connected" && chainId === "0xa4b1" && (
               <div className={"flex"} onClick={connect}>
                 <strong className="font-semibold">
                   Connected as {account?.substr(0, 5)}...
@@ -62,14 +62,9 @@ export const Navbar: FunctionComponent<NavbarProps> = ({
                 </strong>
               </div>
             )}
-            {status === "connected" && chainId !== "0x66eeb" && (
-              <div
-                className={"flex cursor-pointer"}
-                onClick={switchToArbitrumTestnet}
-              >
-                <strong className="font-semibold">
-                  Switch to Arbitrum Testnet
-                </strong>
+            {status === "connected" && chainId !== "0xa4b1" && (
+              <div className={"flex cursor-pointer"} onClick={switchToArbitrum}>
+                <strong className="font-semibold">Switch to Arbitrum</strong>
               </div>
             )}
           </div>
