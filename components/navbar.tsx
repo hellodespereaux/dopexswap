@@ -67,6 +67,17 @@ export const Navbar: FunctionComponent<NavbarProps> = ({
                 <strong className="font-semibold">Switch to Arbitrum</strong>
               </div>
             )}
+            {status === "initializing" && (
+              <div className={"flex cursor-pointer"}>
+                <strong className="font-semibold">
+                  Unlock your Metamask to proceed
+                </strong>
+                <img
+                  src={"/images/metamask.png"}
+                  className={"w-4 h-4 ml-2 mt-0.5"}
+                />
+              </div>
+            )}
           </div>
 
           <nav className="sm:block ml-10">
