@@ -122,3 +122,11 @@
 .smallNote {
     font-size: 12px;
 }
+
+.hopImage {
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+    margin-left: 5px;
+    margin-top: 7px;
+}

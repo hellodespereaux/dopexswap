@@ -59,3 +59,7 @@ body {
     --tw-gradient-from: rgba(9,147,236,1);
     --tw-gradient-stops: var(--tw-gradient-from),var(--tw-gradient-to,rgba(9,147,236,0));
 }
+
+.ant-dropdown.ant-dropdown-placement-topRight.ant-slide-down-leave.ant-slide-down-leave-active.ant-slide-down {
+    display: none;
+}

@@ -1,6 +1,6 @@
 import styles from "../styles/swapbox.module.css";
 import { FunctionComponent, useState, useEffect } from "react";
-import { Tooltip, Spin } from "antd";
+import { Slider, Spin, Dropdown, Menu, Tooltip } from "antd";
 import { DelayInput } from "react-delay-input";
 
 const tokensOut = [
@@ -80,6 +80,7 @@ type Transaction = {
 type Path = {
   toTokenAmount: string;
   tx: Transaction;
+  protocols: any[];
 };
 
 export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
@@ -88,6 +89,8 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
   const [amountIn, setAmountIn] = useState<string>("");
   const [slippageTolerance, setSlippageTolerance] = useState<string>("0.1");
   const [path, setPath] = useState<Path | null>(null);
+  const [isSettingsDropdownVisible, setIsSettingsDropdownVisible] =
+    useState<boolean>(false);
   const [isBalanceInsufficient, setIsBalanceInsufficient] =
     useState<boolean>(false);
   const [suggestedMaximumAmount, setSuggestedMaximumAmount] = useState<
@@ -176,6 +179,16 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
       });
   };
 
+  const getHops = () => {
+    const hops: string[] = [];
+    path &&
+      path["protocols"] &&
+      path.protocols[0].map((protocol: { name: string }[]) =>
+        hops.push(protocol[0].name)
+      );
+    return hops;
+  };
+
   useEffect(
     function () {
       if (amountIn) getPathFromAmountIn();
@@ -211,8 +224,36 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
                   Swap across Arbitrum DEXs
                 </span>
               </div>
-              <Tooltip title={"Settings"}>
+              <Dropdown
+                visible={isSettingsDropdownVisible}
+                overlay={
+                  <Menu>
+                    <Menu.Item key={0} className={"text-center"}>
+                      Slippage tolerance
+                      <Slider
+                        min={0}
+                        max={5}
+                        onChange={(value) =>
+                          setSlippageTolerance(value.toString())
+                        }
+                        step={0.1}
+                        value={parseFloat(slippageTolerance)}
+                      />
+                      <p className={"text-sky-500 mb-1"}>
+                        {slippageTolerance}%{" "}
+                        {parseFloat(slippageTolerance) > 0.3 && (
+                          <span className={"text-red-500"}>(High!)</span>
+                        )}
+                      </p>
+                    </Menu.Item>
+                  </Menu>
+                }
+                placement="topRight"
+              >
                 <svg
+                  onClick={() =>
+                    setIsSettingsDropdownVisible(!isSettingsDropdownVisible)
+                  }
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -227,7 +268,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
                     d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
                   />
                 </svg>
-              </Tooltip>
+              </Dropdown>
             </div>
             <div className="flex mt-7 max-w-full flex-wrap ml-8 mr-8">
               <DelayInput
@@ -459,6 +500,34 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
                     Approve
                   </button>
                 )}
+              </div>
+            )}
+            {path && !isBalanceInsufficient && (
+              <div className="mt-5 mb-7 max-w-full mx-7">
+                <p className={"text-white mt-1"}>
+                  Minimum amount -{" "}
+                  <b>
+                    {path?.toTokenAmount && tokenOut
+                      ? (parseInt(path?.toTokenAmount) *
+                          (1 - parseFloat(slippageTolerance) / 100)) /
+                        10 ** tokenOut.decimals
+                      : "0.0"}
+                  </b>
+                </p>
+                <p className={"text-white mt-1"}>
+                  Slippage tolerance - <b>{slippageTolerance}%</b>
+                </p>
+                <div className={"flex mt-1"}>
+                  <p className={"text-white"}>Path -</p>{" "}
+                  {getHops().map((hop) => (
+                    <Tooltip title={hop}>
+                      <img
+                        src={"/images/" + hop + ".png"}
+                        className={styles.hopImage}
+                      />
+                    </Tooltip>
+                  ))}
+                </div>
               </div>
             )}
           </div>
