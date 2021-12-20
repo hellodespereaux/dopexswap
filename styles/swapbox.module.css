@@ -12,8 +12,8 @@
 .swapBoxWrapper {
     margin-top: 4%;
     position: relative;
+    margin-bottom: 4%;
 }
-
 
 .swapBox:after {
     --tw-translate-x: 0;
