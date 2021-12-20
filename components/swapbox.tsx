@@ -523,7 +523,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
                 <div className={"flex mt-1"}>
                   <p className={"text-white"}>Path -</p>{" "}
                   {getHops().map((hop) => (
-                    <Tooltip title={hop}>
+                    <Tooltip title={hop} key={hop}>
                       <img
                         src={"/images/" + hop + ".png"}
                         className={styles.hopImage}
