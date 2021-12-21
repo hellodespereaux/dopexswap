@@ -74,7 +74,7 @@ type Transaction = {
   gas: number | string | undefined;
   to: string;
   value: string;
-  gasPrice?: string | null ;
+  gasPrice?: string | null;
 };
 
 type Path = {
@@ -158,7 +158,6 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
     if (!allowanceTransaction || !account) return;
     allowanceTransaction["from"] = account;
     delete allowanceTransaction["gasPrice"];
-    // @ts-ignore
     await window["ethereum"]
       .request({
         method: "eth_sendTransaction",
@@ -507,6 +506,16 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
             )}
             {path && (
               <div className="mt-5 mb-7 max-w-full mx-7">
+                <p className={"text-white mt-1"}>
+                  Price -{" "}
+                  <b>
+                    {path?.toTokenAmount && tokenOut
+                      ? parseFloat(amountIn) /
+                        (parseInt(path?.toTokenAmount) /
+                          10 ** tokenOut.decimals)
+                      : "0.0"}
+                  </b>
+                </p>
                 <p className={"text-white mt-1"}>
                   Minimum amount -{" "}
                   <b>
