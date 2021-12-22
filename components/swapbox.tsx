@@ -106,11 +106,7 @@ export const SwapBox: FunctionComponent<SwapBoxProps> = ({ account }) => {
     setIsLoading(true);
     setIsBalanceInsufficient(false);
     setIsAllowanceInsufficient(false);
-    const amount =
-      tokenIn &&
-      (parseFloat(amountIn) * 10 ** tokenIn.decimals)
-        .toLocaleString()
-        .replaceAll(".", "");
+    const amount = tokenIn && BigInt(parseFloat(amountIn) * 10 ** tokenIn.decimals);
     const request = await fetch(
       `https://api.1inch.io/v4.0/42161/swap?fromTokenAddress=${tokenIn?.address}&toTokenAddress=${tokenOut?.address}&amount=${amount}&fromAddress=${account}&slippage=${slippageTolerance}`
     );
